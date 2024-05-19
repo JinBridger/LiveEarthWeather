@@ -61,17 +61,6 @@
             justify-content: center;
         }
 
-        .live-earth-grid {
-            display: grid;
-            grid-template-columns: repeat(var(--level, 1), calc(var(--scale, 1.0) * 550px));
-            grid-template-rows: repeat(var(--level, 1), calc(var(--scale, 1.0) * 550px));
-        }
-
-        .live-earth-grid>img {
-            width: 100%;
-            height: 100%;
-        }
-
         #weather {
             position: fixed;
             width: 100%;
@@ -88,41 +77,33 @@
 </head>
 
 <body>
-    <div class="live-earth">
-        <div class="live-earth-grid" id="live-earth"></div>
-    </div>
+    <div class="live-earth" id="live-earth"></div>
     <div id="weather"></div>
     <div style="position: fixed; width: 100%; height: 100%;"></div>
     <script>
         let currentDate = "";
 
         let loadEarth = () => {
-            let liveEarthGrid = document.getElementById("live-earth");
+            let liveEarth = document.getElementById("live-earth");
 
-            fetch(h8Baseuri + "himawari8/img/FULL_24h/latest.json")
-                .then(res => res.json())
-                .then(data => {
-                    let latestTime = data.date;
-                    if (currentDate === latestTime && liveEarthGrid.style.getPropertyValue("--level") == level) {
-                        return Promise.reject("Earth image is latest.");
-                    }
-                    currentDate = latestTime;
-                    return latestTime.replace(/[\s\-]/g, "/").replace(/[:]/g, "");
-                })
-                .then(imageid => {
-                    liveEarthGrid.style.setProperty("--level", level);
-                    liveEarthGrid.innerHTML = "";
-                    for (let i = 0; i < level; i++) {
-                        for (let j = 0; j < level; j++) {
-                            let imageuri = `${h8Baseuri}himawari8/img/D531106/${level}d/550/${imageid}_${j}_${i}.png`;
-                            let image = document.createElement('img');
-                            image.src = imageuri;
-                            liveEarthGrid.appendChild(image);
-                        }
-                    }
-                }, reject => {
-                    console.info(reject);
-                });
+            var minutesBefore = 30;
+            var resolution = level * 550;
+    
+            var utcNow = new Date(new Date().getTime());
+            utcNow.setMinutes(utcNow.getMinutes() - (minutesBefore + utcNow.getMinutes() % 10));
+            utcNow.setSeconds(0);
+    
+            var year = utcNow.getUTCFullYear();
+            var month = utcNow.getUTCMonth() + 1; // JavaScript months are 0-11
+            var day = utcNow.getUTCDate();
+            var formattedTime = utcNow.toISOString().replace(/[-:]/g, "").replace(/[T]/g, "").slice(0, 15);
+    
+            var url = "http://agora.ex.nii.ac.jp/digital-typhoon/iiif/" + year + "/" + month.toString().padStart(2, '0') + "/" + day.toString().padStart(2, '0') + "/" + formattedTime + "tif/0,0,11000,11000/" +     resolution + ",/0/default.jpg";
+
+            liveEarth.innerHTML = "";
+            let image = document.createElement('img')
+            image.src = url
+            liveEarth.appendChild(image)
         };
 
 
